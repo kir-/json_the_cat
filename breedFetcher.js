@@ -2,22 +2,34 @@ let request = require('request');
 
 let breeds = process.argv.slice(2);
 
-breeds.forEach(breed => {
+let requestBreeds = (breed, cb) => {
+  //let catPromise = new Promise((resolve, reject) => {
   request(`https://api.thecatapi.com/v1/breeds/search?q=${breed}`, (error, response, body) => {
-    //console.log(error);
-    //console.log(response);
-    //console.log(body);
-
+    let promiseReturn = '';
     if (error) {
-      return console.log('Failed to request details: ', error);
+      promiseReturn = `Failed to request details: ${error}`;
     }
 
     const data = JSON.parse(body);
     if (data[0]) {
-      console.log(data[0]["description"]);
+      promiseReturn = `${breed}: ${data[0]["description"]}`;
     } else {
-      console.log(`${breed} not found`);
+      promiseReturn = `${breed} not found`;
     }
-    //console.log(typeof data);
+    cb(error,promiseReturn);
+  });
+};
+
+
+let promiseArray = breeds.map((breed)=>{
+  return new Promise((resolve, reject) => {
+    requestBreeds(breed, (err, data)=> {
+      resolve(data);
+    });
   });
 });
+
+Promise.all(promiseArray).then(function(values) {
+  console.log(values.join("\n"));
+});
+
